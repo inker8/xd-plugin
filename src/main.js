@@ -16,15 +16,15 @@ const Folder = storage.Folder
  * @param {string} name
  * @returns {string}
  */
-function filerName(name) {
-  return name.replace(/[\\\/:*?"<>|#]/g, '-')
+function filterName(name) {
+  return name.replace(/[\W]+/g, '-')
 }
 
 async function getDbJson(nodes) {
   let tempFolder = await fs.getTemporaryFolder();
   tempFolder = await tempFolder.createFolder(Math.random().toString(36).slice(2))
   let files = await Promise.all(
-    nodes.map(node => tempFolder.createFile(filerName(node.name) + '.svg'))
+    nodes.map(node => tempFolder.createFile(`${Math.random().toString(36).slice(5)}.svg`))
   )
   let results = await application.createRenditions(nodes.map(
     (node, i) => {
@@ -38,6 +38,10 @@ async function getDbJson(nodes) {
       }
     }
   ))
+  let len = 100
+  while (len--) {
+    await new Promise(res => res())
+  }
   let svgs = await Promise.all(
     files.map(f => f.read())
   )
@@ -51,7 +55,7 @@ async function getDbJson(nodes) {
   // )
   let svgList = svgs.map((svg, i) => ({
     svg,
-    name: nodes[i].name,
+    name: nodes[i].name
   })).filter(s => s.svg && s.svg !== 'null' && s.name)
   return `
     window['__ARTBOARDS__'] = ${JSON.stringify(svgList)}
@@ -68,7 +72,7 @@ async function copyFolder(folder, dist) {
     if (entry.isFile) {
       entry.copyTo(dist)
     } else {
-      let d = await dist.createFolder(filerName(entry.name))
+      let d = await dist.createFolder(filterName(entry.name))
       copyFolder(/** @type {Folder} */ (entry), d)
     }
   }
@@ -114,7 +118,7 @@ async function createAutoFolder(folder, name, i = 0) {
  * @param {string} name
  */
 async function saveNodes(nodes, name) {
-  name = name.replace(/\W+/g, '-')
+  name = filterName(name)
   let folder = await fs.getFolder();
   if (!folder) {
     return
@@ -124,7 +128,20 @@ async function saveNodes(nodes, name) {
 
   let statics = /** @type {Folder} */ (await pluginFolder.getEntry('assets/static-plugin'))
   /** @type {Folder} */
-  let exportsFolder = await createAutoFolder(folder, name)
+  let exportsFolder = undefined
+  try {
+    exportsFolder = await folder.createFolder(name)
+  } catch (error) {
+    console.error(error)
+    let ret = await Dialogs.confirm(`The folder [${name}] already exists, do you want override it?`, '')
+    if (ret.which === 1) {
+      let oldFolder = /** @type {Folder} */(await folder.getEntry(name))
+      await deleteFolder(oldFolder)
+      exportsFolder = await folder.createFolder(name)
+    } else {
+      exportsFolder = await createAutoFolder(folder, name)
+    }
+  }
   await copyFolder(statics, exportsFolder)
   let dbJson = await getDbJson(nodes)
   let dist = /** @type {Folder} */(await exportsFolder.getEntry('dist'))
