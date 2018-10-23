@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./tools/build.js -w",
-    "link": "node ./tools/build.js",
+    "dev:link": "node ./tools/build.js",
     "bundle": "rm -rf inker8-xd.xdx && cd src && zip -r -X ../inker8-xd.xdx *"
   },
   "author": "",

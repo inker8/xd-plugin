@@ -133,6 +133,7 @@ async function saveNodes(nodes, name) {
 }
 
 async function exportCurrentArtboard(selection, documentRoot) {
+  // console.log('application.appLanguage', application.appLanguage)
   let items = selection.itemsIncludingLocked
   if (!items.length) {
     return Dialogs.alert('No nodes are selected, please select some nodes.')
