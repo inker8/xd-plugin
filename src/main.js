@@ -9,6 +9,8 @@ const storage = require("uxp").storage
 const fs = require("uxp").storage.localFileSystem;
 const application = require('application')
 const Dialogs = require('./lib/dialogs')
+global.setTimeout = /** @type {any} */(global.setTimeout || ((fn) => fn()))
+const Compress = require('./lib/compress')
 const Folder = storage.Folder
 
 /**
@@ -43,16 +45,14 @@ async function getDbJson(nodes) {
     await new Promise(res => res())
   }
   let svgs = await Promise.all(
-    files.map(f => f.read())
+    files.map(async f => {
+      let svg = await f.read()
+      console.log('before', svg.length)
+      let res = await Compress.compressSVG(svg)
+      console.log('after', res.svg.length)
+      return res.svg
+    })
   )
-  // svgs = svgs.map(
-  //   svg => {
-  //     if (typeof svg !== 'string') {
-  //       svg = String.fromCharCode.apply(null, new Uint16Array(buf))
-  //     }
-  //     return svg
-  //   }
-  // )
   let svgList = svgs.map((svg, i) => ({
     svg,
     name: nodes[i].name
@@ -70,7 +70,7 @@ async function copyFolder(folder, dist) {
   let entries = await folder.getEntries()
   for (const entry of entries) {
     if (entry.isFile) {
-      entry.copyTo(dist)
+      entry.copyTo(dist, { overwride: true }).catch(err => console.warn('[warn]', err))
     } else {
       let d = await dist.createFolder(filterName(entry.name))
       copyFolder(/** @type {Folder} */ (entry), d)
