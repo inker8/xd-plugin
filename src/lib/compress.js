@@ -74,7 +74,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "e12c243043e99bc292cc";
+/******/ 	var hotCurrentHash = "fd8e30b895a326177ef6";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -844,7 +844,7 @@ async function compressImg(url, props) {
         img.src = url;
     });
 }
-async function compressSVG(svg, _compressImg = compressImg) {
+async function compressSVG(svg, _compressImg = compressImg, props = {}) {
     let keyCounter = 0;
     let imgArr = [];
     let keyRe = /\$\$\$SVG_IMG\$\$\$_(\d+)/g;
@@ -858,24 +858,41 @@ async function compressSVG(svg, _compressImg = compressImg) {
         }
         return all;
     });
-    let taskArr = imgArr.map(async ([k, data]) => {
-        data = await _compressImg(data, {
-            maxSize: 400,
+    if (props.sync) {
+        let newImgArr = [];
+        for (const task of imgArr) {
+            let data = await _compressImg(task[1], {
+                maxSize: 400,
+            });
+            newImgArr.push([task[0], data]);
+        }
+        imgArr = newImgArr;
+    }
+    else {
+        let taskArr = imgArr.map(async ([k, data]) => {
+            data = await _compressImg(data, {
+                maxSize: 400,
+            });
+            return [k, data];
         });
-        return [k, data];
-    });
-    imgArr = await Promise.all(taskArr);
+        imgArr = await Promise.all(taskArr);
+    }
     svg = svg.replace(keyRe, (_, key) => {
         let data = imgArr[Number(key)];
         return data[1];
     });
-    let thumbnail = await _compressImg(`data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`, {
-        maxSize: 500,
-        crop: 'cover',
-    });
+    let thumbnailBase64 = '';
+    let thumbnail = Buffer.from([]);
+    if (props.thumbnail) {
+        thumbnailBase64 = await _compressImg(`data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`, {
+            maxSize: 500,
+            crop: 'cover',
+        });
+        thumbnail = Buffer.from(thumbnailBase64.split(',', 2)[1], 'base64');
+    }
     return {
         svg,
-        thumbnail: Buffer.from(thumbnail.split(',', 2)[1], 'base64'),
+        thumbnail,
         title
     };
 }
