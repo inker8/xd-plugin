@@ -1,5 +1,7 @@
 # Adobe XD Plugin for Inker8
 
+[![Join the chat at https://gitter.im/inker8/xd-plugin](https://badges.gitter.im/inker8/xd-plugin.svg)](https://gitter.im/inker8/xd-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 An [Adobe XD](https://www.adobe.com/cn/products/xd.html) plugin to export design spec and icons via one click.
 
 ## Features
