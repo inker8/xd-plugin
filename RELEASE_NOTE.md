@@ -4,3 +4,6 @@
 ## 1.0.1
 * Fix windows export
 * Add export dialog
+
+## 1.0.2
+* Fix cannot switch artboards
