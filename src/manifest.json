@@ -1,7 +1,7 @@
 {
   "name": "Inker8",
   "id": "c0e74810",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Export design spec to measure positions, copy css and copy icons.",
   "icons": [
     {
